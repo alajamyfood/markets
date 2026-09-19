@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>تسجيل بيانات الماركت</title>
+  
+  <!-- Leaflet CSS (خريطة مجانية بدون مفتاح) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --primary-dark: #0b5ed7;
+      --success: #198754;
+      --danger: #dc3545;
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-top: 12px;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Form groups */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .form-group label .required {
+      color: var(--danger);
+      margin-right: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff;
+      color: var(--text);
+      direction: rtl;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+
+    .form-control::placeholder {
+      color: #adb5bd;
+    }
+
+    /* Location section */
+    .location-box {
+      background: #f8fafc;
+      border: 1.5px dashed var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .location-status {
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      min-height: 24px;
+    }
+
+    .location-status.loading {
+      color: var(--primary);
+    }
+
+    .location-status.success {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .location-status.error {
+      color: var(--danger);
+    }
+
+    #map {
+      height: 220px;
+      width: 100%;
+      border-radius: 12px;
+      margin-top: 12px;
+      display: none;
+      border: 1px solid var(--border);
+      z-index: 1;
+    }
+
+    .coords {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 10px;
+      direction: ltr;
+      text-align: center;
+      font-family: monospace;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-primary:disabled {
+      background: #94b8f0;
+      cursor: not-allowed;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--primary);
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .btn-outline:hover {
+      background: rgba(13, 110, 253, 0.08);
+    }
+
+    .btn-outline:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Success message */
+    .alert {
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: none;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .alert-success {
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #badbcc;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+
+    /* Footer note */
+    .footer-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 16px;
+      padding-bottom: 20px;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Desktop improvements */
+    @media (min-width: 600px) {
+      body {
+        padding: 32px 16px;
+      }
+      .header h1 {
+        font-size: 1.9rem;
+      }
+      .card {
+        padding: 32px 28px;
+      }
+      #map {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>تسجيل بيانات الماركت</h1>
+      <p>املأ البيانات التالية بدقة</p>
+    </div>
+
+    <!-- رسائل النجاح / الخطأ -->
+    <div id="alertSuccess" class="alert alert-success">
+      ✅ تم إرسال البيانات بنجاح إلى Google Sheets
+    </div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <form id="marketForm" class="card" novalidate>
+      <!-- اسم الموزع -->
+      <div class="form-group">
+        <label for="distributorName">
+          <span class="required">*</span> اسم الموزع
+        </label>
+        <input
+          type="text"
+          id="distributorName"
+          name="distributorName"
+          class="form-control"
+          placeholder="أدخل اسم الموزع"
+          required
+          autocomplete="name"
+        />
+      </div>
+
+      <!-- اسم الماركت -->
+      <div class="form-group">
+        <label for="marketName">
+          <span class="required">*</span> اسم الماركت
+        </label>
+        <input
+          type="text"
+          id="marketName"
+          name="marketName"
+          class="form-control"
+          placeholder="أدخل اسم الماركت"
+          required
+        />
+      </div>
+
+      <!-- رقم هاتف الماركت -->
+      <div class="form-group">
+        <label for="marketPhone">
+          <span class="required">*</span> رقم هاتف الماركت
+        </label>
+        <input
+          type="tel"
+          id="marketPhone"
+          name="marketPhone"
+          class="form-control"
+          placeholder="05xxxxxxxx"
+          required
+          inputmode="numeric"
+          pattern="[0-9+\-\s]{8,15}"
+          lang="en"
+          style="direction: ltr; text-align: right;"
+        />
+      </div>
+
+      <!-- موقع الماركت -->
+      <div class="form-group">
+        <label>
+          <span class="required">*</span> موقع الماركت على الخريطة
+        </label>
+        <div class="location-box">
+          <div id="locationStatus" class="location-status">
+            اضغط الزر لتحديد موقعك الحالي تلقائياً
+          </div>
+          
+          <button type="button" id="getLocationBtn" class="btn btn-outline">
+            📍 تحديد موقعي الحالي (GPS)
+          </button>
+
+          <div id="map"></div>
+          <div id="coords" class="coords"></div>
+        </div>
+      </div>
+
+      <!-- حقول مخفية للإحداثيات -->
+      <input type="hidden" id="latitude" name="latitude" />
+      <input type="hidden" id="longitude" name="longitude" />
+      <input type="hidden" id="accuracy" name="accuracy" />
+      <input type="hidden" id="timestamp" name="timestamp" />
+
+      <!-- زر الإرسال -->
+      <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+        إرسال البيانات
+      </button>
+    </form>
+
+    <p class="footer-note">
+      البيانات تُرسل مباشرة إلى Google Sheets • الموقع يُحدد عبر GPS فقط
+    </p>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ========================
+    // إعدادات Google Sheets
+    // ========================
+    // بعد ما تنشر الـ Apps Script، حط الرابط هنا:
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpclJg-rcGCPLDR1Xf-pvyWm4CZd0vHvManJtorK_EomYqcZBGdQot_4GD-j4WPmAu/exec";
+
+    // ========================
+    // عناصر الصفحة
+    // ========================
+    const form = document.getElementById("marketForm");
+    const getLocationBtn = document.getElementById("getLocationBtn");
+    const locationStatus = document.getElementById("locationStatus");
+    const mapDiv = document.getElementById("map");
+    const coordsDiv = document.getElementById("coords");
+    const latInput = document.getElementById("latitude");
+    const lngInput = document.getElementById("longitude");
+    const accuracyInput = document.getElementById("accuracy");
+    const timestampInput = document.getElementById("timestamp");
+    const submitBtn = document.getElementById("submitBtn");
+    const alertSuccess = document.getElementById("alertSuccess");
+    const alertError = document.getElementById("alertError");
+
+    let map = null;
+    let marker = null;
+    let locationReady = false;
+
+    // ========================
+    // تحويل الأرقام العربية الشرقية إلى لاتينية (0-9)
+    // ========================
+    function toLatinDigits(str) {
+      if (!str) return str;
+      const eastern = "٠١٢٣٤٥٦٧٨٩";
+      const persian = "۰۱۲۳۴۵۶۷۸۹";
+      return str.replace(/[٠-٩۰-۹]/g, (d) => {
+        const i = eastern.indexOf(d);
+        if (i !== -1) return String(i);
+        const j = persian.indexOf(d);
+        if (j !== -1) return String(j);
+        return d;
+      });
+    }
+
+    // فرض الأرقام اللاتينية في حقل الهاتف أثناء الكتابة
+    const phoneInput = document.getElementById("marketPhone");
+    phoneInput.addEventListener("input", function () {
+      const cursorPos = this.selectionStart;
+      const original = this.value;
+      const converted = toLatinDigits(original).replace(/[^0-9+\-\s]/g, "");
+      if (converted !== original) {
+        this.value = converted;
+        // محاولة الحفاظ على موضع المؤشر
+        const diff = original.length - converted.length;
+        this.setSelectionRange(Math.max(0, cursorPos - diff), Math.max(0, cursorPos - diff));
+      }
+      updateSubmitButton();
+    });
+
+    // ========================
+    // تحديد الموقع عبر GPS
+    // ========================
+    getLocationBtn.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        showLocationError("المتصفح لا يدعم خدمة تحديد الموقع");
+        return;
+      }
+
+      getLocationBtn.disabled = true;
+      locationStatus.className = "location-status loading";
+      locationStatus.textContent = "جاري تحديد موقعك بدقة عالية... يرجى الانتظار (قد يستغرق حتى 20 ثانية)";
+
+      // نستخدم watchPosition لفترة قصيرة لأخذ أفضل قراءة ممكنة من GPS
+      let bestPosition = null;
+      let watchId = null;
+      let settled = false;
+
+      const finishWithPosition = (position) => {
+        if (settled) return;
+        settled = true;
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = Math.round(position.coords.accuracy);
+
+        // حفظ الإحداثيات فقط (بدون تاريخ — التاريخ يُضاف عند الإرسال فقط)
+        latInput.value = lat.toFixed(7);
+        lngInput.value = lng.toFixed(7);
+        accuracyInput.value = accuracy;
+
+        // عرض الحالة
+        locationStatus.className = "location-status success";
+        if (accuracy <= 20) {
+          locationStatus.textContent = `تم تحديد الموقع بدقة عالية (±${accuracy} متر)`;
+        } else if (accuracy <= 50) {
+          locationStatus.textContent = `تم تحديد الموقع بنجاح (±${accuracy} متر)`;
+        } else {
+          locationStatus.textContent = `تم تحديد الموقع (±${accuracy} متر) — للدقة الأفضل قف في مكان مفتوح`;
+        }
+        coordsDiv.textContent = `Lat: ${lat.toFixed(6)}  |  Lng: ${lng.toFixed(6)}`;
+
+        // عرض الخريطة + دائرة الدقة
+        showMap(lat, lng);
+        locationReady = true;
+        updateSubmitButton();
+        getLocationBtn.disabled = false;
+        getLocationBtn.textContent = "🔄 إعادة تحديد الموقع";
+      };
+
+      const onError = (error) => {
+        if (settled) return;
+        // إذا كان عندنا قراءة سابقة نستخدمها
+        if (bestPosition) {
+          finishWithPosition(bestPosition);
+          return;
+        }
+        settled = true;
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+        let msg = "فشل تحديد الموقع. ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            msg += "يرجى السماح بالوصول للموقع من إعدادات المتصفح.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            msg += "المعلومات غير متاحة حالياً. تأكد من تفعيل GPS.";
+            break;
+          case error.TIMEOUT:
+            msg += "انتهى وقت الطلب. حاول مرة أخرى في مكان مفتوح.";
+            break;
+          default:
+            msg += "حدث خطأ غير معروف.";
+        }
+        showLocationError(msg);
+        getLocationBtn.disabled = false;
+      };
+
+      // خيارات للدقة العالية
+      const geoOptions = {
+        enableHighAccuracy: true,  // استخدام GPS الحقيقي
+        timeout: 20000,            // انتظار أطول
+        maximumAge: 0              // لا تستخدم موقع قديم مخزن
+      };
+
+      // نبدأ بالمراقبة لأخذ أفضل دقة خلال بضع ثوانٍ
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          // نحتفظ بأفضل (أقل) دقة
+          if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+            bestPosition = position;
+          }
+          // إذا صارت الدقة جيدة جداً (أقل من 25 متر) ننهي فوراً
+          if (position.coords.accuracy <= 25) {
+            finishWithPosition(position);
+          }
+        },
+        onError,
+        geoOptions
+      );
+
+      // بعد 12 ثانية نأخذ أفضل قراءة وصلنا لها
+      setTimeout(() => {
+        if (!settled) {
+          if (bestPosition) {
+            finishWithPosition(bestPosition);
+          } else {
+            // محاولة أخيرة بـ getCurrentPosition
+            navigator.geolocation.getCurrentPosition(finishWithPosition, onError, geoOptions);
+          }
+        }
+      }, 12000);
+    });
+
+    function showLocationError(msg) {
+      locationStatus.className = "location-status error";
+      locationStatus.textContent = msg;
+      locationReady = false;
+      updateSubmitButton();
+    }
+
+    function showMap(lat, lng) {
+      mapDiv.style.display = "block";
+
+      if (!map) {
+        map = L.map("map").setView([lat, lng], 17);
+        // خريطة CartoDB — مجانية وتشتغل بدون حظر
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+          attribution: "© OpenStreetMap, © CartoDB",
+          subdomains: "abcd",
+          maxZoom: 20
+        }).addTo(map);
+      } else {
+        map.setView([lat, lng], 17);
+      }
+
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+
+      // دائرة توضح دقة الموقع
+      if (window.accuracyCircle) {
+        map.removeLayer(window.accuracyCircle);
+      }
+      const acc = parseFloat(accuracyInput.value) || 50;
+      window.accuracyCircle = L.circle([lat, lng], {
+        radius: acc,
+        color: "#0d6efd",
+        fillColor: "#0d6efd",
+        fillOpacity: 0.15,
+        weight: 1.5
+      }).addTo(map);
+
+      // تحديث حجم الخريطة بعد الظهور
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    // ========================
+    // تفعيل زر الإرسال
+    // ========================
+    function updateSubmitButton() {
+      const nameOk = document.getElementById("distributorName").value.trim() !== "";
+      const marketOk = document.getElementById("marketName").value.trim() !== "";
+      const phoneOk = document.getElementById("marketPhone").value.trim() !== "";
+      submitBtn.disabled = !(nameOk && marketOk && phoneOk && locationReady);
+    }
+
+    // مراقبة الحقول
+    ["distributorName", "marketName", "marketPhone"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", updateSubmitButton);
+    });
+
+    // ========================
+    // إرسال النموذج
+    // ========================
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // إخفاء الرسائل السابقة
+      alertSuccess.style.display = "none";
+      alertError.style.display = "none";
+
+      // التحقق النهائي
+      if (!locationReady || !latInput.value || !lngInput.value) {
+        showError("يجب تحديد موقع الماركت أولاً عبر GPS");
+        return;
+      }
+
+      // تاريخ ووقت الإرسال من جهاز المستخدم (مخفي عنه تماماً)
+      const now = new Date();
+      const submitDateTime = now.toLocaleString("en-GB", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).replace(",", ""); // مثال: 19/09/2026 16:05:30
+
+      // التأكد أن رقم الهاتف بالأرقام اللاتينية فقط
+      const phoneLatin = toLatinDigits(
+        document.getElementById("marketPhone").value.trim()
+      ).replace(/[^0-9+\-\s]/g, "");
+
+      const data = {
+        distributorName: document.getElementById("distributorName").value.trim(),
+        marketName: document.getElementById("marketName").value.trim(),
+        marketPhone: phoneLatin,
+        latitude: latInput.value,
+        longitude: lngInput.value,
+        accuracy: accuracyInput.value,
+        timestamp: submitDateTime,   // تاريخ الإرسال من جهاز المستخدم — غير ظاهر له
+        mapsLink: `https://www.google.com/maps?q=${latInput.value},${lngInput.value}`
+      };
+
+      // تعطيل الزر أثناء الإرسال
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> جاري الإرسال...';
+
+      try {
+        // التحقق من الرابط
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_GOOGLE")) {
+          throw new Error("لم يتم ضبط رابط Google Apps Script بعد. راجع التعليمات.");
+        }
+
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors", // مهم لـ Google Apps Script
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        // مع no-cors ما نقدر نقرأ الرد، فنعتبر الإرسال نجح
+        alertSuccess.style.display = "block";
+        form.reset();
+        locationReady = false;
+        latInput.value = "";
+        lngInput.value = "";
+        accuracyInput.value = "";
+        timestampInput.value = "";
+        coordsDiv.textContent = "";
+        locationStatus.className = "location-status";
+        locationStatus.textContent = "اضغط الزر لتحديد موقعك الحالي تلقائياً";
+        getLocationBtn.textContent = "📍 تحديد موقعي الحالي (GPS)";
+        if (map) {
+          mapDiv.style.display = "none";
+        }
+        updateSubmitButton();
+
+        // التمرير لأعلى لرؤية رسالة النجاح
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        showError(err.message || "حدث خطأ أثناء الإرسال. حاول مرة أخرى.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "إرسال البيانات";
+        updateSubmitButton();
+      }
+    });
+
+    function showError(msg) {
+      alertError.textContent = "❌ " + msg;
+      alertError.style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>
