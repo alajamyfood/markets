@@ -3,24 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>تسجيل بيانات الماركت</title>
+  <meta name="theme-color" content="#1abc9c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="تسجيل الماركت - العجمي" />
+  
+  <title>تسجيل بيانات الماركت | شركة العجمي</title>
+  
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <style>
     :root {
-      --primary: #0d6efd;
-      --primary-dark: #0b5ed7;
-      --success: #198754;
-      --danger: #dc3545;
-      --bg: #f0f4f8;
+      --primary: #1abc9c;
+      --primary-dark: #16a085;
+      --primary-light: #e8f8f5;
+      --accent: #f1c40f;
+      --success: #27ae60;
+      --danger: #e74c3c;
+      --bg: #f4f9f8;
       --card: #ffffff;
-      --text: #1a1a2e;
-      --muted: #6c757d;
-      --border: #dee2e6;
-      --shadow: 0 4px 20px rgba(0,0,0,0.08);
-      --radius: 16px;
+      --text: #1a2e2b;
+      --muted: #5a7a74;
+      --border: #d0e8e3;
+      --shadow: 0 8px 30px rgba(26, 188, 156, 0.12);
+      --radius: 18px;
     }
 
     * {
@@ -30,7 +43,7 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -45,55 +58,64 @@
 
     .header {
       text-align: center;
-      margin-bottom: 24px;
-      padding-top: 12px;
+      margin-bottom: 28px;
+      padding-top: 8px;
+    }
+
+    .logo {
+      width: 110px;
+      height: auto;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 12px rgba(26, 188, 156, 0.25));
     }
 
     .header h1 {
-      font-size: 1.6rem;
+      font-size: 1.55rem;
       font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 6px;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
     }
 
     .header p {
       color: var(--muted);
       font-size: 0.95rem;
+      font-weight: 500;
     }
 
     .card {
       background: var(--card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 24px 20px;
+      padding: 28px 22px;
       margin-bottom: 20px;
+      border: 1px solid rgba(26, 188, 156, 0.08);
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     .form-group label {
       display: block;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 9px;
       font-size: 0.95rem;
       color: var(--text);
     }
 
     .form-group label .required {
       color: var(--danger);
-      margin-right: 4px;
+      margin-right: 3px;
     }
 
     .form-control {
       width: 100%;
-      padding: 14px 16px;
+      padding: 15px 16px;
       border: 1.5px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 1rem;
       font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.25s ease;
       background: #fff;
       color: var(--text);
       direction: rtl;
@@ -102,57 +124,49 @@
     .form-control:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+      box-shadow: 0 0 0 4px rgba(26, 188, 156, 0.18);
     }
 
     .form-control::placeholder {
-      color: #adb5bd;
+      color: #a0b8b3;
     }
 
     .location-box {
-      background: #f8fafc;
-      border: 1.5px dashed var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--primary-light);
+      border: 1.5px dashed var(--primary);
+      border-radius: 14px;
+      padding: 18px;
       text-align: center;
     }
 
     .location-status {
-      font-size: 0.9rem;
-      margin-bottom: 12px;
+      font-size: 0.92rem;
+      margin-bottom: 14px;
       min-height: 24px;
+      font-weight: 500;
     }
 
-    .location-status.loading {
-      color: var(--primary);
-    }
-
-    .location-status.success {
-      color: var(--success);
-      font-weight: 600;
-    }
-
-    .location-status.error {
-      color: var(--danger);
-    }
+    .location-status.loading { color: var(--primary-dark); }
+    .location-status.success { color: var(--success); font-weight: 600; }
+    .location-status.error { color: var(--danger); }
 
     #map {
-      height: 220px;
+      height: 230px;
       width: 100%;
-      border-radius: 12px;
-      margin-top: 12px;
+      border-radius: 14px;
+      margin-top: 14px;
       display: none;
       border: 1px solid var(--border);
       z-index: 1;
     }
 
     .coords {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--muted);
       margin-top: 10px;
       direction: ltr;
       text-align: center;
-      font-family: monospace;
+      font-family: 'Courier New', monospace;
     }
 
     .btn {
@@ -161,53 +175,54 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      padding: 14px 20px;
+      padding: 15px 20px;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 1.05rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: all 0.2s ease;
     }
 
-    .btn:active {
-      transform: scale(0.98);
-    }
+    .btn:active { transform: scale(0.98); }
 
     .btn-primary {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
+      box-shadow: 0 6px 20px rgba(26, 188, 156, 0.35);
     }
 
     .btn-primary:hover {
-      background: var(--primary-dark);
+      background: linear-gradient(135deg, var(--primary-dark), #138d75);
+      box-shadow: 0 8px 25px rgba(26, 188, 156, 0.45);
     }
 
     .btn-primary:disabled {
-      background: #94b8f0;
+      background: #a8d8d0;
+      box-shadow: none;
       cursor: not-allowed;
     }
 
     .btn-outline {
       background: transparent;
       border: 1.5px solid var(--primary);
-      color: var(--primary);
+      color: var(--primary-dark);
       margin-bottom: 12px;
     }
 
     .btn-outline:hover {
-      background: rgba(13, 110, 253, 0.08);
+      background: rgba(26, 188, 156, 0.1);
     }
 
     .btn-outline:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
     .alert {
       padding: 16px;
-      border-radius: 12px;
+      border-radius: 14px;
       margin-bottom: 20px;
       display: none;
       font-weight: 500;
@@ -215,23 +230,23 @@
     }
 
     .alert-success {
-      background: #d1e7dd;
-      color: #0f5132;
-      border: 1px solid #badbcc;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
 
     .alert-error {
       background: #f8d7da;
-      color: #842029;
-      border: 1px solid #f5c2c7;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
     }
 
     .footer-note {
       text-align: center;
       font-size: 0.8rem;
       color: var(--muted);
-      margin-top: 16px;
-      padding-bottom: 20px;
+      margin-top: 18px;
+      padding-bottom: 24px;
     }
 
     .spinner {
@@ -249,30 +264,25 @@
     }
 
     @media (min-width: 600px) {
-      body {
-        padding: 32px 16px;
-      }
-      .header h1 {
-        font-size: 1.9rem;
-      }
-      .card {
-        padding: 32px 28px;
-      }
-      #map {
-        height: 280px;
-      }
+      body { padding: 36px 16px; }
+      .header h1 { font-size: 1.8rem; }
+      .card { padding: 34px 30px; }
+      #map { height: 280px; }
+      .logo { width: 130px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <!-- ضع صورة اللوغو هنا -->
+      <img src="logo.png" alt="شركة العجمي" class="logo" onerror="this.style.display='none'" />
       <h1>تسجيل بيانات الماركت</h1>
-      <p>شركة العجمي</p>
+      <p>شركة العجمي الغذائية</p>
     </div>
 
     <div id="alertSuccess" class="alert alert-success">
-      ✅ تم إرسال البيانات بنجاح شكراً لك
+      ✅ تم إرسال البيانات بنجاح، شكراً لك
     </div>
     <div id="alertError" class="alert alert-error"></div>
 
@@ -281,47 +291,26 @@
         <label for="distributorName">
           <span class="required">*</span> اسم الموزع
         </label>
-        <input
-          type="text"
-          id="distributorName"
-          name="distributorName"
-          class="form-control"
-          placeholder="أدخل اسم الموزع"
-          required
-          autocomplete="name"
-        />
+        <input type="text" id="distributorName" name="distributorName" class="form-control"
+               placeholder="أدخل اسم الموزع" required autocomplete="name" />
       </div>
 
       <div class="form-group">
         <label for="marketName">
           <span class="required">*</span> اسم الماركت
         </label>
-        <input
-          type="text"
-          id="marketName"
-          name="marketName"
-          class="form-control"
-          placeholder="أدخل اسم الماركت"
-          required
-        />
+        <input type="text" id="marketName" name="marketName" class="form-control"
+               placeholder="أدخل اسم الماركت" required />
       </div>
 
       <div class="form-group">
         <label for="marketPhone">
           <span class="required">*</span> رقم هاتف الماركت
         </label>
-        <input
-          type="tel"
-          id="marketPhone"
-          name="marketPhone"
-          class="form-control"
-          placeholder="05xxxxxxxx"
-          required
-          inputmode="numeric"
-          pattern="[0-9+\-\s]{8,15}"
-          lang="en"
-          style="direction: ltr; text-align: right;"
-        />
+        <input type="tel" id="marketPhone" name="marketPhone" class="form-control"
+               placeholder="05xxxxxxxx" required inputmode="numeric"
+               pattern="[0-9+\-\s]{8,15}" lang="en"
+               style="direction: ltr; text-align: right;" />
       </div>
 
       <div class="form-group">
@@ -426,9 +415,7 @@
         if (settled) return;
         settled = true;
         isLocating = false;
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-        }
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
 
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
@@ -463,9 +450,8 @@
         }
         settled = true;
         isLocating = false;
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-        }
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
         let msg = "فشل تحديد الموقع. ";
         switch (error.code) {
           case error.PERMISSION_DENIED:
@@ -516,8 +502,6 @@
     }
 
     getLocationBtn.addEventListener("click", requestLocation);
-
-    // تحديد الموقع تلقائياً عند فتح الصفحة
     requestLocation();
 
     function showLocationError(msg) {
@@ -547,16 +531,14 @@
         marker = L.marker([lat, lng]).addTo(map);
       }
 
-      if (accuracyCircle) {
-        map.removeLayer(accuracyCircle);
-      }
+      if (accuracyCircle) map.removeLayer(accuracyCircle);
       var acc = parseFloat(accuracyInput.value) || 50;
       accuracyCircle = L.circle([lat, lng], {
         radius: acc,
-        color: "#0d6efd",
-        fillColor: "#0d6efd",
+        color: "#1abc9c",
+        fillColor: "#1abc9c",
         fillOpacity: 0.15,
-        weight: 1.5
+        weight: 2
       }).addTo(map);
 
       setTimeout(function () { map.invalidateSize(); }, 200);
@@ -599,12 +581,8 @@
 
       var now = new Date();
       var submitDateTime = now.toLocaleString("en-GB", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
         hour12: false
       }).replace(",", "");
 
