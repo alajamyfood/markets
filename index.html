@@ -275,7 +275,6 @@
 <body>
   <div class="container">
     <div class="header">
-      <!-- ضع صورة اللوغو هنا -->
       <img src="logo.png" alt="شركة العجمي" class="logo" onerror="this.style.display='none'" />
       <h1>تسجيل بيانات الماركت</h1>
       <p>شركة العجمي الغذائية</p>
@@ -405,6 +404,28 @@
       getLocationBtn.disabled = true;
       getLocationBtn.textContent = "📍 جاري التحديد...";
       locationStatus.className = "location-status loading";
+      locationStatus.textContent = "جاري طلب إذن الوصول للموقع...";
+
+      // محاولة طلب الإذن بشكل صريح
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then((result) => {
+          if (result.state === "denied") {
+            showLocationError("تم رفض إذن الموقع سابقاً. افتح إعدادات المتصفح → الموقع → اسمح لهذا الموقع ثم اضغط إعادة التحديد.");
+            isLocating = false;
+            getLocationBtn.disabled = false;
+            getLocationBtn.textContent = "📍 تحديد موقعي الحالي (GPS)";
+            return;
+          }
+          startWatching();
+        }).catch(() => {
+          startWatching();
+        });
+      } else {
+        startWatching();
+      }
+    }
+
+    function startWatching() {
       locationStatus.textContent = "جاري تحديد موقعك بدقة عالية... يرجى الانتظار";
 
       let bestPosition = null;
@@ -415,7 +436,9 @@
         if (settled) return;
         settled = true;
         isLocating = false;
-        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+        }
 
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
@@ -450,21 +473,23 @@
         }
         settled = true;
         isLocating = false;
-        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+        }
 
-        let msg = "فشل تحديد الموقع. ";
+        let msg = "";
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            msg += "يرجى السماح بالوصول للموقع من إعدادات المتصفح ثم اضغط إعادة التحديد.";
+            msg = "تم رفض إذن الوصول للموقع. افتح إعدادات المتصفح → الخصوصية → الموقع → اسمح لهذا الموقع، ثم اضغط «إعادة تحديد الموقع».";
             break;
           case error.POSITION_UNAVAILABLE:
-            msg += "الموقع غير متاح. تأكد من تفعيل GPS ثم اضغط إعادة التحديد.";
+            msg = "الموقع غير متاح حالياً. تأكد أن GPS مفعّل على الجهاز ثم حاول مرة ثانية.";
             break;
           case error.TIMEOUT:
-            msg += "انتهى الوقت. حاول مرة أخرى في مكان مفتوح.";
+            msg = "انتهى الوقت. قف في مكان مفتوح (بعيد عن المباني) ثم اضغط إعادة التحديد.";
             break;
           default:
-            msg += "حدث خطأ غير معروف.";
+            msg = "حدث خطأ غير معروف أثناء تحديد الموقع.";
         }
         showLocationError(msg);
         getLocationBtn.disabled = false;
@@ -473,7 +498,7 @@
 
       const geoOptions = {
         enableHighAccuracy: true,
-        timeout: 20000,
+        timeout: 25000,
         maximumAge: 0
       };
 
@@ -482,7 +507,7 @@
           if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
             bestPosition = position;
           }
-          if (position.coords.accuracy <= 25) {
+          if (position.coords.accuracy <= 30) {
             finishWithPosition(position);
           }
         },
@@ -498,7 +523,7 @@
             navigator.geolocation.getCurrentPosition(finishWithPosition, onError, geoOptions);
           }
         }
-      }, 12000);
+      }, 15000);
     }
 
     getLocationBtn.addEventListener("click", requestLocation);
@@ -516,10 +541,11 @@
 
       if (!map) {
         map = L.map("map").setView([lat, lng], 17);
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-          attribution: "© OpenStreetMap, © CartoDB",
-          subdomains: "abcd",
-          maxZoom: 20
+        
+        // طبقة OpenStreetMap المجانية (بدون أي مفتاح)
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap",
+          maxZoom: 19
         }).addTo(map);
       } else {
         map.setView([lat, lng], 17);
@@ -531,17 +557,19 @@
         marker = L.marker([lat, lng]).addTo(map);
       }
 
-      if (accuracyCircle) map.removeLayer(accuracyCircle);
+      if (accuracyCircle) {
+        map.removeLayer(accuracyCircle);
+      }
       var acc = parseFloat(accuracyInput.value) || 50;
       accuracyCircle = L.circle([lat, lng], {
         radius: acc,
         color: "#1abc9c",
         fillColor: "#1abc9c",
-        fillOpacity: 0.15,
+        fillOpacity: 0.18,
         weight: 2
       }).addTo(map);
 
-      setTimeout(function () { map.invalidateSize(); }, 200);
+      setTimeout(function () { map.invalidateSize(); }, 250);
     }
 
     function clearMap() {
@@ -581,8 +609,12 @@
 
       var now = new Date();
       var submitDateTime = now.toLocaleString("en-GB", {
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
         hour12: false
       }).replace(",", "");
 
